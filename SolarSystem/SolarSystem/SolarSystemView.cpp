@@ -23,8 +23,15 @@
 IMPLEMENT_DYNCREATE(CSolarSystemView, CView)
 
 BEGIN_MESSAGE_MAP(CSolarSystemView, CView)
+	// 표준 인쇄 명령입니다.
+	ON_COMMAND(ID_FILE_PRINT, &CView::OnFilePrint)
+	ON_COMMAND(ID_FILE_PRINT_DIRECT, &CView::OnFilePrint)
+	ON_COMMAND(ID_FILE_PRINT_PREVIEW, &CSolarSystemView::OnFilePrintPreview)
 	ON_WM_CONTEXTMENU()
 	ON_WM_RBUTTONUP()
+	ON_WM_CREATE()
+	ON_WM_DESTROY()
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 // CSolarSystemView 생성/소멸
@@ -32,22 +39,11 @@ END_MESSAGE_MAP()
 CSolarSystemView::CSolarSystemView() noexcept
 {
 	// TODO: 여기에 생성 코드를 추가합니다.
-	m_hGLContext = NULL;
-	m_GLPixelIndex = 0;
+
 }
 
 CSolarSystemView::~CSolarSystemView()
 {
-	if (wglGetCurrentContext() != NULL) {
-		wglMakeCurrent(NULL, NULL);
-	}
-
-	if (m_hGLContext != NULL) {
-		wglDeleteContext(m_hGLContext);
-		m_hGLContext = NULL;
-	}
-
-	CView::OnDestroy();
 }
 
 BOOL CSolarSystemView::PreCreateWindow(CREATESTRUCT& cs)
@@ -58,77 +54,7 @@ BOOL CSolarSystemView::PreCreateWindow(CREATESTRUCT& cs)
 	return CView::PreCreateWindow(cs);
 }
 
-BOOL CSolarSystemView::SetWindowPixelFormat(HDC hDC) {
-	PIXELFORMATDESCRIPTOR pixelDesc;
-	pixelDesc.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-	pixelDesc.nVersion = 1;
-	pixelDesc.dwFlags = PFD_DRAW_TO_WINDOW |
-		PFD_DRAW_TO_BITMAP |
-		PFD_SUPPORT_OPENGL |
-		PFD_SUPPORT_GDI |
-		PFD_STEREO_DONTCARE;
-	pixelDesc.iPixelType = PFD_TYPE_RGBA;
-	pixelDesc.cColorBits = 32;
-	pixelDesc.cRedBits = 8;
-	pixelDesc.cRedShift = 16;
-	pixelDesc.cGreenBits = 8;
-	pixelDesc.cGreenShift = 8;
-	pixelDesc.cBlueBits = 8;
-	pixelDesc.cBlueShift = 0;
-	pixelDesc.cAlphaBits = 0;
-	pixelDesc.cAlphaShift = 0;
-	pixelDesc.cAccumBits = 64;
-	pixelDesc.cAccumRedBits = 16;
-	pixelDesc.cAccumGreenBits = 16;
-	pixelDesc.cAccumBlueBits = 16;
-	pixelDesc.cAccumAlphaBits = 0;
-	pixelDesc.cDepthBits = 32;
-	pixelDesc.cStencilBits = 8;
-	pixelDesc.cAccumAlphaBits = 0;
-	pixelDesc.iLayerType = PFD_MAIN_PLANE;
-	pixelDesc.bReserved = 0;
-	pixelDesc.dwLayerMask = 0;
-	pixelDesc.dwVisibleMask = 0;
-	pixelDesc.dwDamageMask = 0;
-	m_GLPixelIndex = ChoosePixelFormat(hDC, &pixelDesc);
-	if (m_GLPixelIndex == 0) {
-		m_GLPixelIndex = 1;
-		if (DescribePixelFormat(hDC, m_GLPixelIndex,
-			sizeof(PIXELFORMATDESCRIPTOR), &pixelDesc) == 0) {
-			return FALSE;
-		}
-	}
-
-	if (SetPixelFormat(hDC, m_GLPixelIndex, &pixelDesc) == FALSE) {
-		return FALSE;
-	}
-
-	return TRUE;
-}
 // CSolarSystemView 그리기
-BOOL CSolarSystemView::CreateViewGLContext(HDC hDC) {
-	m_hGLContext = wglCreateContext(hDC);
-	if (m_hGLContext == NULL) {
-		return FALSE;
-	}
-
-	if (wglMakeCurrent(hDC, m_hGLContext) == FALSE) {
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-int CSolarSystemView::OnCreate(LPCREATESTRUCT lpCreateStruct) {
-	if (CView::OnCreate(lpCreateStruct) == -1)
-		return -1;
-
-	HWND hWnd = GetSafeHwnd();
-	HDC hDC = ::GetDC(hWnd);
-	if (SetWindowPixelFormat(hDC) == FALSE) return 0;
-	if (CreateViewGLContext(hDC) == FALSE) return 0;
-	return 0;
-}
 
 void CSolarSystemView::OnDraw(CDC* /*pDC*/)
 {
@@ -138,6 +64,34 @@ void CSolarSystemView::OnDraw(CDC* /*pDC*/)
 		return;
 
 	// TODO: 여기에 원시 데이터에 대한 그리기 코드를 추가합니다.
+	DrawGLScene();
+}
+
+
+// CSolarSystemView 인쇄
+
+
+void CSolarSystemView::OnFilePrintPreview()
+{
+#ifndef SHARED_HANDLERS
+	AFXPrintPreview(this);
+#endif
+}
+
+BOOL CSolarSystemView::OnPreparePrinting(CPrintInfo* pInfo)
+{
+	// 기본적인 준비
+	return DoPreparePrinting(pInfo);
+}
+
+void CSolarSystemView::OnBeginPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
+{
+	// TODO: 인쇄하기 전에 추가 초기화 작업을 추가합니다.
+}
+
+void CSolarSystemView::OnEndPrinting(CDC* /*pDC*/, CPrintInfo* /*pInfo*/)
+{
+	// TODO: 인쇄 후 정리 작업을 추가합니다.
 }
 
 void CSolarSystemView::OnRButtonUp(UINT /* nFlags */, CPoint point)
@@ -176,3 +130,140 @@ CSolarSystemDoc* CSolarSystemView::GetDocument() const // 디버그되지 않은
 
 
 // CSolarSystemView 메시지 처리기
+
+
+BOOL CSolarSystemView::SetDevicePixelFormat(HDC hdc) {
+	int pixelformat;
+
+	PIXELFORMATDESCRIPTOR pfd = {
+		sizeof(PIXELFORMATDESCRIPTOR),
+		1,
+		PFD_DRAW_TO_WINDOW |
+		PFD_SUPPORT_OPENGL |
+		PFD_GENERIC_FORMAT |
+		PFD_DOUBLEBUFFER,
+		PFD_TYPE_RGBA,
+		32,
+		0, 0, 0, 0, 0, 0,
+		8,
+		0,
+		8,
+		0, 0, 0, 0,
+		16,
+		0,
+		0,
+		PFD_MAIN_PLANE,
+		0,
+		0, 0, 0
+	};
+
+	if ((pixelformat = ChoosePixelFormat(hdc, &pfd)) == FALSE) {
+		MessageBox(LPCTSTR("ChoosePixelFormat failed"), LPCTSTR("Error"), MB_OK);
+		return FALSE;
+	}
+
+	if (SetPixelFormat(hdc, pixelformat, &pfd) == FALSE) {
+		MessageBox(LPCTSTR("SetPixelFormat failed"), LPCTSTR("Error"), MB_OK);
+	}
+
+	return TRUE;
+}
+
+
+
+int CSolarSystemView::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	if (CView::OnCreate(lpCreateStruct) == -1)
+		return -1;
+
+	// TODO:  여기에 특수화된 작성 코드를 추가합니다.
+	m_hDC = GetDC()->m_hDC;
+	if (!SetDevicePixelFormat(m_hDC))
+		return -1;
+
+	// create rendering context and make it current
+	m_hglRC = wglCreateContext(m_hDC);
+	wglMakeCurrent(m_hDC, m_hglRC);
+
+	InitGL();
+
+	return 0;
+}
+
+
+void CSolarSystemView::OnDestroy()
+{
+	CView::OnDestroy();
+
+	// TODO: 여기에 메시지 처리기 코드를 추가합니다.
+	// deselect rendering context and delete it
+	wglMakeCurrent(m_hDC, NULL);
+	wglDeleteContext(m_hglRC);
+}
+
+
+void CSolarSystemView::InitGL(void)
+{
+	glClearColor(0.f, 0.f, 0.f, 0.5f);
+	glClearDepth(1.f);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+}
+
+
+void CSolarSystemView::OnSize(UINT nType, int cx, int cy)
+{
+	CView::OnSize(nType, cx, cy);
+
+	// TODO: 여기에 메시지 처리기 코드를 추가합니다.
+	ReSizeGLScene(cx, cy);
+}
+
+void CSolarSystemView::ReSizeGLScene(GLsizei width, GLsizei height)
+{
+	if (height == 0)
+		height = 1;
+
+	// reset the viewport to new dimentions
+	glViewport(0, 0, width, height);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	// calculate aspect ratio of the window
+	gluPerspective(45.0f, (GLfloat)width / (GLfloat)height, 0.1f, 1000.0f);
+
+	//set modelview matrix
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+}
+
+
+void CSolarSystemView::DrawGLScene(void)
+{
+	// clear screen and depth buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
+
+	// camera view configuration 
+	gluLookAt(
+		0.0f, 0.0f, 3.0f,
+		0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f
+	);
+
+	// draw
+	glBegin(GL_TRIANGLES);
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glVertex3f(0.5f, 0.0f, 0.0f);
+	
+		glColor3f(0.0f, 1.0f, 0.0f);
+		glVertex3f(0.0f, 0.5f, 0.0f);
+	
+		glColor3f(0.0f, 0.0f, 1.0f);
+		glVertex3f(-0.5f, 0.0f, 0.0f);
+	glEnd();
+
+	// swap buffer
+	SwapBuffers(m_hDC);
+}

@@ -4,7 +4,6 @@
 
 #pragma once
 
-
 class CSolarSystemView : public CView
 {
 protected: // serialization에서만 만들어집니다.
@@ -17,18 +16,27 @@ public:
 
 // 작업입니다.
 public:
-	BOOL SetWindowPixelFormat(HDC hDC);
+	HDC		m_hDC;
+	HGLRC	m_hglRC;
+
+public:
+	BOOL SetDevicePixelFormat(HDC hdc);
+	void InitGL(GLvoid);
+	void ReSizeGLScene(GLsizei width, GLsizei height);
+	void DrawGLScene(void);
 
 // 재정의입니다.
 public:
-	virtual int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	virtual void OnSize(UINT nType, int cx, int cy);
 	virtual void OnDraw(CDC* pDC);  // 이 뷰를 그리기 위해 재정의되었습니다.
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 protected:
+	virtual BOOL OnPreparePrinting(CPrintInfo* pInfo);
+	virtual void OnBeginPrinting(CDC* pDC, CPrintInfo* pInfo);
+	virtual void OnEndPrinting(CDC* pDC, CPrintInfo* pInfo);
 
 // 구현입니다.
 public:
-	BOOL CreateViewGLContext(HDC hDC);
 	virtual ~CSolarSystemView();
 #ifdef _DEBUG
 	virtual void AssertValid() const;
@@ -36,8 +44,6 @@ public:
 #endif
 
 protected:
-	int m_GLPixelIndex;
-	HGLRC m_hGLContext;
 
 // 생성된 메시지 맵 함수
 protected:
@@ -45,6 +51,9 @@ protected:
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void OnDestroy();
 };
 
 #ifndef _DEBUG  // SolarSystemView.cpp의 디버그 버전
