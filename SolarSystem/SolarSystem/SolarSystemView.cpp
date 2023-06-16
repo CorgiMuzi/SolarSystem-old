@@ -12,6 +12,7 @@
 
 #include "SolarSystemDoc.h"
 #include "SolarSystemView.h"
+#include "OpenGLFunc.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -253,16 +254,14 @@ void CSolarSystemView::DrawGLScene(void)
 	);
 
 	// draw
-	glBegin(GL_TRIANGLES);
-		glColor3f(1.0f, 0.0f, 0.0f);
-		glVertex3f(0.5f, 0.0f, 0.0f);
 	
-		glColor3f(0.0f, 1.0f, 0.0f);
-		glVertex3f(0.0f, 0.5f, 0.0f);
+	COpenGLFunc::DrawCircle(0.0f, 0.0f, 0.8f, 60.0f, GL_LINE_LOOP);
 	
-		glColor3f(0.0f, 0.0f, 1.0f);
-		glVertex3f(-0.5f, 0.0f, 0.0f);
-	glEnd();
+	//COpenGLFunc::DrawTriangle(
+	//	-0.5f, 0.0f, 0.0f,
+	//	0.0f, 0.8f, 0.0f,
+	//	0.5f, 0.0f, 0.0f
+	//);
 
 	// swap buffer
 	SwapBuffers(m_hDC);
