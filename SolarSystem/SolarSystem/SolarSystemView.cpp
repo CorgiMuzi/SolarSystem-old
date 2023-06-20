@@ -159,12 +159,12 @@ BOOL CSolarSystemView::SetDevicePixelFormat(HDC hdc) {
 	};
 
 	if ((pixelformat = ChoosePixelFormat(hdc, &pfd)) == FALSE) {
-		MessageBox(LPCTSTR("ChoosePixelFormat failed"), LPCTSTR("Error"), MB_OK);
+		MessageBox(LPCTSTR(R"(ChoosePixelFormat failed)"), LPCTSTR(R"(Error)"), MB_OK);
 		return FALSE;
 	}
 
 	if (SetPixelFormat(hdc, pixelformat, &pfd) == FALSE) {
-		MessageBox(LPCTSTR("SetPixelFormat failed"), LPCTSTR("Error"), MB_OK);
+		MessageBox(LPCTSTR(R"(SetPixelFormat failed)"), LPCTSTR(R"(Error)"), MB_OK);
 	}
 
 	return TRUE;
@@ -255,7 +255,12 @@ void CSolarSystemView::DrawGLScene(void)
 
 	// draw
 	
-	COpenGLFunc::DrawCircle(0.0f, 0.0f, 0.8f, 60.0f, GL_LINE_LOOP);
+	COpenGLFunc::DrawSphere(
+		0.0f, 0.0f, 0.0f,
+		0.8f, 6.0f, 6.0f
+	);
+
+	//COpenGLFunc::DrawCircle(0.0f, 0.0f, 0.8f, 60.0f, GL_LINE_LOOP);
 	
 	//COpenGLFunc::DrawTriangle(
 	//	-0.5f, 0.0f, 0.0f,
