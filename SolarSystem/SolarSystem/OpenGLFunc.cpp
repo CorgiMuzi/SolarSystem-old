@@ -69,46 +69,61 @@ void COpenGLFunc::DrawCircle(GLfloat x, GLfloat y, GLfloat radius, GLfloat densi
 	glEnd();
 }
 
+/// <summary>
+/// Draw a sphere
+/// </summary>
+/// <param name="cx">x position of the center of the sphere</param>
+/// <param name="cy">y position of the center of the sphere</param>
+/// <param name="cz">z position of the center of the sphere</param>
+/// <param name="radius">the radius of the sphere</param>
+/// <param name="densityYaw">the x-side density of the sphere</param>
+/// <param name="densityRoll">the y-side density of the sphere</param>
 void COpenGLFunc::DrawSphere(GLfloat cx, GLfloat cy, GLfloat cz, GLfloat radius, GLfloat densityYaw, GLfloat densityRoll) {
-	// 임의의 값 넣어놓기
-	radius = 0.5f;
-	densityYaw = densityRoll = 6.0f;
+	vector<vector<vector3f>> vertices;
+	vector3f top(cx, cy + radius, cz), bottom(cx, cy - radius, cz);
+	vertices.push_back(vector<vector3f>(1, top));
 
-	float thetaYaw = 2 * (float)PI / densityYaw;
-	float thetaRoll = 2 * (float)PI / densityRoll;
+	float yawTheta = (float)PI / densityYaw, rollTheta = (float)PI / densityRoll;
 
-	vector<vector3f> vertices;
-	// 제일 위의 정점 추가
-	//vertices.push_back(vector3f(0.0f, radius, 0.0f));
+	GLfloat vx = 0, vy = 0, vz = 0;
+	for (float roll = 0; roll <= 2 * (float)PI; roll += rollTheta) {
+		vx = radius * cosf(roll);
+		vy = radius * sinf(roll);
+		vector<vector3f> rowVertices;
+		for (float yaw = 0; yaw <= 2 * (float)PI; yaw += yawTheta) {
+			vz = radius * sinf(yaw);
 
-	for (int h = 0; h <= densityRoll; ++h) {
-		float sphereY = cy + radius * cosf(thetaRoll * h);
-		float subRadius = radius * sinf(thetaRoll * h);
-		for (int c = 0; c <= densityYaw; ++c) {
-			float sphereX = cx + subRadius * sinf(thetaYaw * c);
-			float sphereZ = cz + subRadius * cosf(thetaYaw * c);
+			rowVertices.push_back(vector3f(vx, vy, vz));
+		}
 
-			vertices.push_back(vector3f(sphereX, sphereY, sphereZ));
+		vertices.push_back(rowVertices);
+	}
+
+
+	vertices.push_back(vector<vector3f>(1, bottom));
+
+	glBegin(GL_LINE_LOOP);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	for (vector<vector3f>::size_type i = 0; i < vertices[1].size(); ++i) {
+		glVertex3f(vertices[0][0].x, vertices[0][0].y, vertices[0][0].z);
+		glVertex3f(vertices[1][i].x, vertices[1][i].y, vertices[1][i].z);
+		if (i + 1 == vertices[1].size()) {
+			glVertex3f(vertices[1][0].x, vertices[1][0].y, vertices[1][0].z);
+		}
+		else {
+			glVertex3f(vertices[1][i + 1].x, vertices[1][i + 1].y, vertices[1][i + 1].z);
 		}
 	}
 
-	// 제일 아래의 정점 추가
-	//vertices.push_back(vector3f(0.0f, -radius, 0.0f));
-
-	
-	glPointSize(5.0f);
-	glColor3f(0.8f, 0.0f, 0.5f);
-	glBegin(GL_POINTS);
-	for (vector<int>::size_type i = 2; i <= densityYaw; ++i) {
-		
-	}
-
-	for (vector<int>::size_type i = densityYaw + 1; i < vertices.size() - (1 + densityYaw); ++i) {
-
-	}
-
-	for (vector<int>::size_type i = vertices.size() - densityYaw; i + 2 < vertices.size(); ++i) {
-
+	for (vector<vector3f>::size_type i = 0; i < vertices[vertices.size() - 2].size(); ++i) {
+		glVertex3f(vertices[vertices.size() - 2][i].x, vertices[vertices.size() - 2][i].y, vertices[vertices.size() - 2][i].z);
+		glVertex3f(vertices[vertices.size() - 1][0].x, vertices[vertices.size() - 1][0].y, vertices[vertices.size() - 1][0].z);
+		if (i + 1 == vertices[vertices.size() - 2].size()) {
+			glVertex3f(vertices[vertices.size() - 2][0].x, vertices[vertices.size() - 2][0].y, vertices[vertices.size() - 2][0].z);
+		}
+		else {
+			glVertex3f(vertices[vertices.size() - 2][i + 1].x, vertices[vertices.size() - 2][i + 1].y, vertices[vertices.size() - 2][i + 1].z);
+		}
 	}
 	glEnd();
 }

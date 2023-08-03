@@ -257,7 +257,7 @@ void CSolarSystemView::DrawGLScene(void)
 	
 	COpenGLFunc::DrawSphere(
 		0.0f, 0.0f, 0.0f,
-		0.8f, 6.0f, 6.0f
+		0.8f, 3.0f, 3.0f
 	);
 
 	//COpenGLFunc::DrawCircle(0.0f, 0.0f, 0.8f, 60.0f, GL_LINE_LOOP);
