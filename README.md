@@ -1,4 +1,4 @@
-# SolarSystem
+# Draw solar system with OpenGL
 
 ## ☀️ 코어 OpenGL과 MFC를 사용하여 태양계 그리기 프로젝트
 
